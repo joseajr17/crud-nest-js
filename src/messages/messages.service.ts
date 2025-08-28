@@ -66,9 +66,9 @@ export class MessagesService {
     }
   }
 
-  remove(id: string) {
+  remove(id: number) {
     const messageExistsIndex = this.messages.findIndex(
-      (item) => item.id === +id,
+      (item) => item.id === id,
     );
 
     if (messageExistsIndex < 0) {
