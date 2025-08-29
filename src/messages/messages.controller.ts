@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
@@ -19,6 +17,12 @@ import { MessageUpdateDTO } from './dtos/message-update.dto';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
+  // @HttpCode(HttpStatus.CREATED)
+  @Post()
+  create(@Body() body: MessageRequestDTO) {
+    return this.messagesService.create(body);
+  }
+
   @Get()
   findAll(@Query() pagination: any) {
     const { limit = 10, offset = 0 } = pagination;
@@ -28,12 +32,6 @@ export class MessagesController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.messagesService.findOne(id);
-  }
-
-  // @HttpCode(HttpStatus.CREATED)
-  @Post()
-  create(@Body() body: MessageRequestDTO) {
-    return this.messagesService.create(body);
   }
 
   @Put(':id')

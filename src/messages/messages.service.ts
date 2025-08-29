@@ -12,18 +12,17 @@ export class MessagesService {
     private readonly messageRepository: Repository<Message>,
   ) {}
 
-  private lastId = 1;
-
-  private messages: Message[] = [
-    {
-      id: 1,
-      text: 'Recado de teste',
-      from: 'Maria',
-      to: 'João',
+  create(body: MessageRequestDTO) {
+    const newMessage = {
+      ...body,
       read: false,
       date: new Date(),
-    },
-  ];
+    };
+
+    const message = this.messageRepository.create(newMessage);
+
+    return this.messageRepository.save(message);
+  }
 
   findAll() {
     return this.messageRepository.find();
@@ -41,18 +40,6 @@ export class MessagesService {
 
     // throw new HttpException('Message not found.', HttpStatus.NOT_FOUND);
     throw new NotFoundException('Message not found');
-  }
-
-  create(body: MessageRequestDTO) {
-    const newMessage = {
-      ...body,
-      read: false,
-      date: new Date(),
-    };
-
-    const message = this.messageRepository.create(newMessage);
-
-    return this.messageRepository.save(message);
   }
 
   async update(id: number, body: MessageUpdateDTO) {
