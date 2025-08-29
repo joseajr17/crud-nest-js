@@ -26,11 +26,16 @@ export class MessagesService {
   ];
 
   findAll() {
-    return this.messages;
+    return this.messageRepository.find();
   }
 
-  findOne(id: string) {
-    const message = this.messages.find((item) => item.id === +id);
+  async findOne(id: number) {
+    // const message = this.messages.find((item) => item.id === +id);
+    const message = await this.messageRepository.findOne({
+      where: {
+        id,
+      },
+    });
 
     if (message) return message;
 
@@ -39,53 +44,40 @@ export class MessagesService {
   }
 
   create(body: MessageRequestDTO) {
-    this.lastId++;
-    const id = this.lastId;
     const newMessage = {
-      id,
       ...body,
       read: false,
       date: new Date(),
     };
 
-    this.messages.push(newMessage);
-    return newMessage;
+    const message = this.messageRepository.create(newMessage);
+
+    return this.messageRepository.save(message);
   }
 
-  update(id: string, body: MessageUpdateDTO) {
-    const messageExistsIndex = this.messages.findIndex(
-      (item) => item.id === +id,
-    );
+  async update(id: number, body: MessageUpdateDTO) {
+    const partialMessageUpdateDTO = {
+      read: body?.read,
+      text: body?.text,
+    };
 
-    if (messageExistsIndex < 0) {
-      throw new NotFoundException('Message not found.');
-    }
+    const message = await this.messageRepository.preload({
+      id,
+      ...partialMessageUpdateDTO,
+    });
 
-    if (messageExistsIndex >= 0) {
-      const existingMessage = this.messages[messageExistsIndex];
+    if (!message) throw new NotFoundException('Message not found');
 
-      this.messages[messageExistsIndex] = {
-        ...existingMessage,
-        ...body,
-      };
-
-      return this.messages[messageExistsIndex];
-    }
-  }
-
-  remove(id: number) {
-    const messageExistsIndex = this.messages.findIndex(
-      (item) => item.id === id,
-    );
-
-    if (messageExistsIndex < 0) {
-      throw new NotFoundException('Message not found.');
-    }
-
-    const message = this.messages[messageExistsIndex];
-
-    this.messages.splice(messageExistsIndex, 1);
+    await this.messageRepository.save(message);
 
     return message;
+  }
+
+  async remove(id: number) {
+    const message = await this.messageRepository.findOneBy({ id });
+
+    if (!message) throw new NotFoundException('Message not found');
+
+    return this.messageRepository.remove(message);
   }
 }

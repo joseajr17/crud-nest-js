@@ -19,7 +19,6 @@ import { MessageUpdateDTO } from './dtos/message-update.dto';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-  @HttpCode(HttpStatus.CREATED)
   @Get()
   findAll(@Query() pagination: any) {
     const { limit = 10, offset = 0 } = pagination;
@@ -27,17 +26,21 @@ export class MessagesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.messagesService.findOne(id);
   }
 
+  // @HttpCode(HttpStatus.CREATED)
   @Post()
   create(@Body() body: MessageRequestDTO) {
     return this.messagesService.create(body);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() body: MessageUpdateDTO) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: MessageUpdateDTO,
+  ) {
     return this.messagesService.update(id, body);
   }
 
