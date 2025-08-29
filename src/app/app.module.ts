@@ -20,8 +20,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: config.get<string>('DB_USERNAME'),
         database: config.get<string>('DB_NAME'),
         password: config.get<string>('DB_PASSWORD'),
-        autoLoadEntities: true,
-        synchronize: true,
+        autoLoadEntities: true, // Carrega entidades sem precisar especificá-las
+        synchronize: true, // Sincroniza com o BD. Ñ deve ser usado em prod
       }),
     }),
     MessagesModule,
