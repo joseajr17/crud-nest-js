@@ -4,28 +4,62 @@ import { MessageRequestDTO } from './dtos/message-request.dto';
 import { MessageUpdateDTO } from './dtos/message-update.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    private readonly usersService: UsersService,
   ) {}
 
-  create(body: MessageRequestDTO) {
+  async create(body: MessageRequestDTO) {
+    const { fromId, toId, text } = body;
+
+    const from = await this.usersService.findOne(fromId);
+
+    const to = await this.usersService.findOne(toId);
+
     const newMessage = {
-      ...body,
+      text,
+      from,
+      to,
       read: false,
       date: new Date(),
     };
 
     const message = this.messageRepository.create(newMessage);
+    await this.messageRepository.save(message);
 
-    return this.messageRepository.save(message);
+    return {
+      ...message,
+      from: {
+        id: message.from,
+      },
+      to: {
+        id: message.to,
+      },
+    };
   }
 
   findAll() {
-    return this.messageRepository.find();
+    return this.messageRepository.find({
+      relations: ['from', 'to'],
+      order: {
+        id: 'desc',
+      },
+      select: {
+        from: {
+          id: true,
+          name: true,
+        },
+        to: {
+          id: true,
+          name: true,
+        },
+      },
+    });
   }
 
   async findOne(id: number) {
@@ -33,6 +67,17 @@ export class MessagesService {
     const message = await this.messageRepository.findOne({
       where: {
         id,
+      },
+      relations: ['from', 'to'],
+      select: {
+        from: {
+          id: true,
+          name: true,
+        },
+        to: {
+          id: true,
+          name: true,
+        },
       },
     });
 
@@ -43,20 +88,12 @@ export class MessagesService {
   }
 
   async update(id: number, body: MessageUpdateDTO) {
-    const partialMessageUpdateDTO = {
-      read: body?.read,
-      text: body?.text,
-    };
+    const message = await this.findOne(id);
 
-    const message = await this.messageRepository.preload({
-      id,
-      ...partialMessageUpdateDTO,
-    });
-
-    if (!message) throw new NotFoundException('Message not found');
+    message.text = body?.text ?? message.text;
+    message.read = body?.read ?? message.read;
 
     await this.messageRepository.save(message);
-
     return message;
   }
 
